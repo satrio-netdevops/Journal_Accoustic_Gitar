@@ -14,7 +14,6 @@ const char* NAMA_AKT[3] = {"Hum", "Deh", "Kpi"};
 
 // ---------------- Konstanta desain ----------------
 const float DEADBAND = 10.0f;    // % (asumsi desain)
-const float ALARM_C  = 40.6f;    // ambang alarm suhu (Taylor), di luar aturan fuzzy
 
 // ==== INTI FUZZY (mulai) ====
 float yMin = 0, yMax = 100;
@@ -105,7 +104,7 @@ void pwmTulis(int k, float persen) {
 #endif
 }
 
-void tampilOLED(float t, float rh, const float pwm[3], const char* info, bool alarm) {
+void tampilOLED(float t, float rh, const float pwm[3], const char* info) {
   char buf[24];
   display.clearDisplay();
   display.setTextSize(1);
@@ -120,17 +119,18 @@ void tampilOLED(float t, float rh, const float pwm[3], const char* info, bool al
     snprintf(buf, sizeof buf, "%3d%%", (int)roundf(pwm[k]));
     display.setCursor(98, y0);  display.print(buf);
   }
+  display.setCursor(0, 54);
+  display.print(info);
+  display.display();
 }
 
 void proses(float t, float rh, const char* label, const char* info) {
   float y[3], pwm[3];
   inferensi(t, rh, y);
   for (int k = 0; k < 3; k++) { pwm[k] = kePWM(y[k]); pwmTulis(k, pwm[k]); }
-  bool alarm = (t >= ALARM_C);
   Serial.printf("%s,%.1f,%.1f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f\n",
                 label, t, rh, y[0], y[1], y[2], pwm[0], pwm[1], pwm[2]);
-  if (alarm) Serial.println("# ALARM: suhu >= 40.6 C");
-  tampilOLED(t, rh, pwm, info, alarm);
+  tampilOLED(t, rh, pwm, info);
 }
 
 // ---------------- Titik uji (sama dengan Tabel_uji.csv MATLAB) ----------------
